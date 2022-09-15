@@ -1,10 +1,13 @@
+import gravatarUrl from "gravatar-url";
+import moment from "moment";
 import { useSelector } from "react-redux";
 import { useGetConversationQuery } from "../../features/conversation/conversationsApi";
+import getPartnerInfo from "./../../utils/getPartnerInfo";
 import Error from "./../ui/Error";
 import ChatItem from "./ChatItem";
 
 export default function ChatItems() {
-  const { user } = useSelector((state) => state.auth);
+  const { user } = useSelector((state) => state.auth) || {};
   const { email } = user || {};
   const {
     data: conversations,
@@ -17,8 +20,8 @@ export default function ChatItems() {
 
   if (isLoading) {
     content = (
-      <li>
-        <div className="m-2 text-center bg-green-300 text-green-600 py-3 rounded-md">
+      <li className="m-2 text-center">
+        <div className="bg-green-200 text-green-600 rounded-md py-3">
           Loading
         </div>
       </li>
@@ -33,23 +36,27 @@ export default function ChatItems() {
     content = (
       <li className="m-2 text-center">
         <Error message={"No conversation found"} />
-        <div>error</div>
       </li>
     );
   } else if (!isLoading && !error && conversations?.length > 0) {
-    // eslint-disable-next-line array-callback-return
     content = conversations.map((conversation) => {
-      const { message } = conversations;
-      <>
-        <li>
+      const { id, message, timestamp } = conversation;
+      const { email } = user || {};
+      const { name, email: partnerEmail } = getPartnerInfo(
+        conversation?.users,
+        email
+      );
+
+      return (
+        <li key={id}>
           <ChatItem
-            avatar="https://cdn.pixabay.com/photo/2018/09/12/12/14/man-3672010__340.jpg"
-            name="Saad Hasan"
+            avatar={gravatarUrl(partnerEmail)}
+            name={name}
             lastMessage={message}
-            lastTime="25 minutes"
+            lastTime={moment(timestamp).fromNow()}
           />
         </li>
-      </>;
+      );
     });
   }
 

@@ -8,5 +8,6 @@ const conversationsSlice = createSlice({
   reducers: {},
 });
 
+// eslint-disable-next-line no-empty-pattern
 export const {} = conversationsSlice.actions;
 export default conversationsSlice.reducer;
