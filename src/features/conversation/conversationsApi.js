@@ -5,7 +5,7 @@ export const conversationsApi = apiSlice.injectEndpoints({
     //conversation endpoints
     getConversation: builder.query({
       query: (email) =>
-        `/conversation?participants_like=${email}&_short=timestamp&_order=desc&_page=1&_limit=${process.env.REACT_APP_CONVERSATIONS_PER_PAGE}`,
+        `/conversations?participants_like=${email}&_short=timestamp&_order=desc&_page=1&_limit=${process.env.REACT_APP_CONVERSATIONS_PER_PAGE}`,
     }),
   }),
 });
