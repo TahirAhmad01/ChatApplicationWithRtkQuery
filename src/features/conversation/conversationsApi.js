@@ -63,7 +63,6 @@ export const conversationsApi = apiSlice.injectEndpoints({
       }),
       async onQueryStarted(arg, { queryFulfilled, dispatch }) {
         const conversation = await queryFulfilled;
-        //optimistic catch update
 
         try {
           if (conversation?.data?.id) {
@@ -84,7 +83,7 @@ export const conversationsApi = apiSlice.injectEndpoints({
             );
           }
         } catch (err) {
-          // patchResult.undo();
+          console.log(err);
         }
       },
     }),
