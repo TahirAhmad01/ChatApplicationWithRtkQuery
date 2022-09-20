@@ -2,7 +2,11 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useGetUsersQuery } from "../../features/users/usersApi";
 import isEmailValid from "../../utils/isValidEmail";
-import { conversationsApi } from "./../../features/conversation/conversationsApi";
+import {
+  conversationsApi,
+  useAddConversationMutation,
+  useEditConversationMutation,
+} from "./../../features/conversation/conversationsApi";
 import Error from "./../ui/Error";
 
 export default function Modal({ open, control }) {
@@ -11,6 +15,15 @@ export default function Modal({ open, control }) {
   const [userCheck, setUserCheck] = useState(false);
   const [responseError, setResponseError] = useState("");
   const [conversation, setConversation] = useState(undefined);
+
+  const [
+    addConversation,
+    { isSuccess: successAdded, isLoading: isLoadingAdded },
+  ] = useAddConversationMutation();
+  const [
+    editConversation,
+    { isSuccess: successEdited, isLoading: isLoadingEdited },
+  ] = useEditConversationMutation();
 
   const { user } = useSelector((state) => state.auth) || {};
   const dispatch = useDispatch();
@@ -27,7 +40,7 @@ export default function Modal({ open, control }) {
   //   const { email: participantEmail } = participant || {};
   const { email: userEmail } = user || {};
 
-  console.log(participant);
+  //console.log(participant);
 
   const debounceHandler = (fn, delay) => {
     let timeoutId;
@@ -40,26 +53,34 @@ export default function Modal({ open, control }) {
   };
 
   useEffect(() => {
-    return () => {
-      if (participant?.length > 0 && participant[0]?.email !== userEmail) {
-        dispatch(
-          conversationsApi.endpoints.getConversation
-            .initiate({
-              userEmail,
-              participantEmail: to,
-            })
-            .unWrap()
-            .then((data) => {
-              setConversation(data);
-            })
-            .catch((err) => {
-              setResponseError("there was an error occurred");
-              console.log(err);
-            })
-        );
-      }
-    };
+    if (participant?.length > 0 && participant[0]?.email !== userEmail) {
+      //   console.log("enter block");
+      dispatch(
+        conversationsApi.endpoints.getConversation.initiate({
+          userEmail,
+          participantEmail: to,
+        })
+      )
+        .unwrap()
+        .then((data) => {
+          setConversation(data);
+          //   console.log(data);
+        })
+        .catch((err) => {
+          setResponseError("there was an error occurred");
+          console.log(err);
+        });
+    }
   }, [participant, userEmail, to, dispatch]);
+
+  useEffect(() => {
+    if (successAdded || successEdited) {
+      control(false);
+      setMessage("");
+      setTo("");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [successAdded, successEdited]);
 
   const doSearch = (value) => {
     if (isEmailValid(value)) {
@@ -71,11 +92,41 @@ export default function Modal({ open, control }) {
   };
 
   const handleSearch = debounceHandler(doSearch, 500);
-
+  //console.log(conversation);
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("form submit");
+    // console.log("form submit");
+
+    if (conversation?.length > 0) {
+      //edit conversation
+      editConversation({
+        sender: userEmail,
+        id: conversation[0]?.id,
+        data: {
+          participants: `${userEmail}-${participant[0].email}`,
+          users: [user, participant[0]],
+          message: message,
+          timestamp: new Date().getTime(),
+        },
+      });
+    } else if (conversation?.length === 0) {
+      console.log("add con block enter");
+      //add conversation
+      addConversation({
+        sender: userEmail,
+        data: {
+          participants: `${userEmail}-${participant[0].email}`,
+          users: [user, participant[0]],
+          message: message,
+          timestamp: new Date().getTime(),
+        },
+      });
+    }
   };
+
+  //   console.log(conversation);
+  //   console.log(participant);
+  //   console.log(userEmail);
 
   return (
     open && (
@@ -90,7 +141,6 @@ export default function Modal({ open, control }) {
           </h2>
           <form
             className="mt-8 space-y-6"
-            action="#"
             method="POST"
             onSubmit={handleSubmit}
           >
@@ -130,14 +180,26 @@ export default function Modal({ open, control }) {
             <div>
               <button
                 type="submit"
-                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-violet-600 hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500"
+                className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md ${
+                  conversation === undefined ||
+                  (participant?.length > 0 &&
+                    participant[0]?.email === userEmail) ||
+                  message === "" ||
+                  isLoadingAdded ||
+                  isLoadingEdited
+                    ? "bg-gray-300 text-black"
+                    : "bg-violet-600 text-white hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500"
+                } `}
                 disabled={
                   conversation === undefined ||
                   (participant?.length > 0 &&
-                    participant[0]?.email === userEmail)
+                    participant[0]?.email === userEmail) ||
+                  message === "" ||
+                  isLoadingAdded ||
+                  isLoadingEdited
                 }
               >
-                Send Message
+                {isLoadingAdded || isLoadingEdited ? "Loading" : "Send Message"}
               </button>
             </div>
 
@@ -147,6 +209,17 @@ export default function Modal({ open, control }) {
 
             {participant?.length > 0 && participant[0]?.email === userEmail && (
               <Error message="You can not sent message yourself" />
+            )}
+
+            {successAdded && (
+              <div className="text-center text-green-600 font-medium">
+                Message Added Successful
+              </div>
+            )}
+            {successEdited && (
+              <div className="text-center text-green-600 font-medium">
+                Message Edited Successful
+              </div>
             )}
 
             {responseError !== "" && <Error message={responseError} />}

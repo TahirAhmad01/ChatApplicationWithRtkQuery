@@ -16,7 +16,7 @@ export default function Messages({ messages = [] }) {
             const { message: LastMessage, id, sender } = message;
             const { email: senderEmail } = sender;
 
-            const justify = email !== senderEmail ? "end" : "start";
+            const justify = email !== senderEmail ? "start" : "end";
 
             return (
               <Message key={id} justify={`${justify}`} message={LastMessage} />

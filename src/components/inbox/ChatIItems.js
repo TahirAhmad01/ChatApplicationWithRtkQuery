@@ -40,29 +40,32 @@ export default function ChatItems() {
       </li>
     );
   } else if (!isLoading && !error && conversations?.length > 0) {
-    content = conversations.map((conversation) => {
-      const { id, message, timestamp } = conversation;
-      const { email } = user || {};
-      const { name, email: partnerEmail } = getPartnerInfo(
-        conversation?.users,
-        email
-      );
+    content = conversations
+      .slice()
+      .sort((a, b) => b.timestamp - a.timestamp)
+      .map((conversation) => {
+        const { id, message, timestamp } = conversation;
+        const { email } = user || {};
+        const { name, email: partnerEmail } = getPartnerInfo(
+          conversation?.users,
+          email
+        );
 
-      return (
-        <li key={id}>
-          <Link to={`/inbox/${id}`}>
-            <ChatItem
-              avatar={gravatarUrl(partnerEmail, {
-                size: 80,
-              })}
-              name={name}
-              lastMessage={message}
-              lastTime={moment(timestamp).fromNow()}
-            />
-          </Link>
-        </li>
-      );
-    });
+        return (
+          <li key={id}>
+            <Link to={`/inbox/${id}`}>
+              <ChatItem
+                avatar={gravatarUrl(partnerEmail, {
+                  size: 80,
+                })}
+                name={name}
+                lastMessage={message}
+                lastTime={moment(timestamp).fromNow()}
+              />
+            </Link>
+          </li>
+        );
+      });
   }
 
   return <ul>{content}</ul>;
