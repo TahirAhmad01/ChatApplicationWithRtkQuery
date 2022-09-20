@@ -32,15 +32,14 @@ export const conversationsApi = apiSlice.injectEndpoints({
                 (con) => con.id == data.data.id
               );
 
-              // console.log(conversation);
-
-              if (conversation.id) {
+              if (conversation?.id) {
                 conversation.message = data?.data?.message;
                 conversation.timestamp = data?.data?.timestamp;
               } else {
-                //
+                draft.push(data.data);
               }
             });
+            console.log(data);
           });
         } catch (error) {
           console.log(error);
@@ -65,15 +64,7 @@ export const conversationsApi = apiSlice.injectEndpoints({
       async onQueryStarted(arg, { queryFulfilled, dispatch }) {
         const conversation = await queryFulfilled;
         //optimistic catch update
-        const patchResult = dispatch(
-          apiSlice.util.updateQueryData(
-            "getConversations",
-            arg.sender,
-            (draft) => {
-              draft.push(conversation.data);
-            }
-          )
-        );
+
         try {
           if (conversation?.data?.id) {
             const users = arg.data.users;
@@ -82,7 +73,7 @@ export const conversationsApi = apiSlice.injectEndpoints({
               (user) => user.email !== arg.sender
             );
 
-            const res = await dispatch(
+            dispatch(
               messagesApi.endpoints.addMessage.initiate({
                 conversationId: conversation?.data?.id,
                 sender: senderUser,
@@ -90,20 +81,10 @@ export const conversationsApi = apiSlice.injectEndpoints({
                 message: arg.data.message,
                 timestamp: arg.data.timestamp,
               })
-            ).unwrap();
-
-            dispatch(
-              apiSlice.util.updateQueryData(
-                "getMessages",
-                res.conversationId.toString(),
-                (draft) => {
-                  draft.push(res);
-                }
-              )
             );
           }
         } catch (err) {
-          patchResult.undo();
+          // patchResult.undo();
         }
       },
     }),
