@@ -9,6 +9,12 @@ export const conversationsApi = apiSlice.injectEndpoints({
       query: (email) =>
         `/conversations?participants_like=${email}&_short=timestamp&_order=desc&_page=1&_limit=${process.env.REACT_APP_CONVERSATIONS_PER_PAGE}`,
 
+      transformResponse(apiResponse, meta) {
+        const totalCount = meta.response.headers.get("X-Total-Count");
+        console.log(totalCount);
+        return { data: apiResponse, pageCount: totalCount };
+      },
+
       async onCacheEntryAdded(
         args,
         { updateCachedData, cacheDataLoaded, cacheEntryRemoved }
@@ -47,6 +53,35 @@ export const conversationsApi = apiSlice.injectEndpoints({
 
         await cacheEntryRemoved;
         socket.close();
+      },
+    }),
+
+    getMoreConversations: builder.query({
+      query: ({ email, page }) =>
+        `/conversations?participants_like=${email}&_short=timestamp&_order=desc&_page=${page}&_limit=${process.env.REACT_APP_CONVERSATIONS_PER_PAGE}`,
+
+      async onQueryStarted({ email }, { queryFulfilled, dispatch }) {
+        const conversations = await queryFulfilled;
+
+        try {
+          if (conversations?.data?.length > 0) {
+            dispatch(
+              apiSlice.util.updateQueryData(
+                "getConversations",
+                email,
+                (draft) => {
+                  // console.log(JSON.stringify(draft));
+                  return {
+                    data: [...draft.data, ...conversations.data],
+                    pageCount: Number(draft.pageCount),
+                  };
+                }
+              )
+            );
+          }
+        } catch (err) {
+          console.log(err);
+        }
       },
     }),
 
@@ -102,7 +137,7 @@ export const conversationsApi = apiSlice.injectEndpoints({
             arg.sender,
             (draft) => {
               // eslint-disable-next-line eqeqeq
-              const draftConversation = draft.find((c) => c.id == arg.id);
+              const draftConversation = draft.data.find((c) => c.id == arg.id);
 
               draftConversation.message = arg.data.message;
               draftConversation.timestamp = arg.data.timestamp;
