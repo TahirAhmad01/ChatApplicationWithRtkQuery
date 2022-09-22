@@ -33,19 +33,20 @@ export const conversationsApi = apiSlice.injectEndpoints({
           await cacheDataLoaded;
           socket.on("conversation", (data) => {
             updateCachedData((draft) => {
-              const conversation = draft.find(
+              console.log(JSON.stringify(data));
+              const conversation = draft?.data?.find(
                 // eslint-disable-next-line eqeqeq
                 (con) => con.id == data.data.id
               );
-
+              console.log(JSON.stringify(conversation));
               if (conversation?.id) {
+                console.log("hello");
                 conversation.message = data?.data?.message;
                 conversation.timestamp = data?.data?.timestamp;
               } else {
-                draft.push(data.data);
+                draft.data.push(data.data);
               }
             });
-            console.log(data);
           });
         } catch (error) {
           console.log(error);
@@ -99,6 +100,8 @@ export const conversationsApi = apiSlice.injectEndpoints({
       async onQueryStarted(arg, { queryFulfilled, dispatch }) {
         const conversation = await queryFulfilled;
 
+        //optimistic catch update
+
         try {
           if (conversation?.data?.id) {
             const users = arg.data.users;
@@ -138,9 +141,10 @@ export const conversationsApi = apiSlice.injectEndpoints({
             (draft) => {
               // eslint-disable-next-line eqeqeq
               const draftConversation = draft.data.find((c) => c.id == arg.id);
-
               draftConversation.message = arg.data.message;
               draftConversation.timestamp = arg.data.timestamp;
+
+              // console.log(JSON.stringify(draftConversation));
             }
           )
         );

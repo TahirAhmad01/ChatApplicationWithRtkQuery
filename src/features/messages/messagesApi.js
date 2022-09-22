@@ -25,10 +25,10 @@ export const messagesApi = apiSlice.injectEndpoints({
           await cacheDataLoaded;
           socket.on("message", (data) => {
             updateCachedData((draft) => {
-              draft.push(data.data);
+              // console.log(JSON.stringify(draft));
+              // console.log(data);
+              return [...draft, { ...data.data }];
             });
-
-            console.log(data);
           });
         } catch (error) {
           console.log(error);

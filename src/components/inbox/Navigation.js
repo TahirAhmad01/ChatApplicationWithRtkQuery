@@ -13,6 +13,7 @@ export default function Navigation() {
     dispatch(userLoggedOut());
     localStorage.removeItem("auth");
   };
+
   return (
     <nav className="border-general sticky top-0 z-40 border-b bg-violet-700 transition-colors">
       <div className="max-w-7xl mx-auto">
@@ -22,12 +23,12 @@ export default function Navigation() {
           </Link>
           <div className="flex align-middle items-center">
             <div className="text-end text-white pr-3 ">
-              <h2 className="text-lg m-0 p-0">{name}</h2>
+              <h2 className="text-lg m-0 p-0 capitalize">{name}</h2>
               <div>{email}</div>
             </div>
             <div>
               <img
-                className="object-cover w-12 h-12 rounded-full"
+                className="object-cover w-12 h-12 rounded-full "
                 src={gravatarUrl(email, {
                   size: 120,
                 })}
@@ -39,7 +40,7 @@ export default function Navigation() {
                 <li className="text-white">
                   <span onClick={handleLogout} className="cursor-pointer pl-3">
                     {/* <i class="bx bx-log-out-circle text-3xl rotate-180"></i> */}
-                    <i class="fa-solid fa-right-from-bracket text-3xl"></i>
+                    <i className="fa-solid fa-right-from-bracket text-3xl"></i>
                   </span>
                 </li>
               </ul>
